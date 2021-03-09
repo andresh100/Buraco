@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
-import { Switch, Route, Link } from 'react-router-dom';
-import { compose } from 'recompose';
+import React, { Component } from "react";
+import { Switch, Route, Link } from "react-router-dom";
+import { compose } from "recompose";
 
-import { withFirebase } from '../Firebase';
-import { withAuthorization } from '../Session';
-import * as ROLES from '../../constants/roles';
-import * as ROUTES from '../../constants/routes';
+import { withFirebase } from "../Firebase";
+import { withAuthorization } from "../Session";
+import * as ROLES from "../../constants/roles";
+import * as ROUTES from "../../constants/routes";
 
 const AdminPage = () => (
   <div>
@@ -32,23 +32,20 @@ class UserListBase extends Component {
   componentDidMount() {
     this.setState({ loading: true });
 
-    this.props.firebase.users().on('value', snapshot => {
-      const usersObject = snapshot.val();
+    this.unsubscribe = this.props.firebase.users().onSnapshot((snapshot) => {
+      let users = [];
 
-      const usersList = Object.keys(usersObject).map(key => ({
-        ...usersObject[key],
-        uid: key,
-      }));
+      snapshot.forEach((doc) => users.push({ ...doc.data(), uid: doc.id }));
 
       this.setState({
-        users: usersList,
+        users,
         loading: false,
       });
     });
   }
 
   componentWillUnmount() {
-    this.props.firebase.users().off();
+    this.unsubscribe();
   }
 
   render() {
@@ -59,7 +56,7 @@ class UserListBase extends Component {
         <h2>Users</h2>
         {loading && <div>Loading ...</div>}
         <ul>
-          {users.map(user => (
+          {users.map((user) => (
             <li key={user.uid}>
               <span>
                 <strong>ID:</strong> {user.uid}
@@ -106,18 +103,18 @@ class UserItemBase extends Component {
 
     this.setState({ loading: true });
 
-    this.props.firebase
+    this.unsubscribe = this.props.firebase
       .user(this.props.match.params.id)
-      .on('value', snapshot => {
+      .onSnapshot((snapshot) => {
         this.setState({
-          user: snapshot.val(),
+          user: snapshot.data(),
           loading: false,
         });
       });
   }
 
   componentWillUnmount() {
-    this.props.firebase.user(this.props.match.params.id).off();
+    this.unsubscribe && this.unsubscribe();
   }
 
   onSendPasswordResetEmail = () => {
@@ -144,10 +141,7 @@ class UserItemBase extends Component {
               <strong>Username:</strong> {user.username}
             </span>
             <span>
-              <button
-                type="button"
-                onClick={this.onSendPasswordResetEmail}
-              >
+              <button type="button" onClick={this.onSendPasswordResetEmail}>
                 Send Password Reset
               </button>
             </span>
@@ -161,9 +155,6 @@ class UserItemBase extends Component {
 const UserList = withFirebase(UserListBase);
 const UserItem = withFirebase(UserItemBase);
 
-const condition = authUser =>
-  authUser && !!authUser.roles[ROLES.ADMIN];
+const condition = (authUser) => authUser && !!authUser.roles[ROLES.ADMIN];
 
-export default compose(
-  withAuthorization(condition),
-)(AdminPage);
+export default compose(withAuthorization(condition))(AdminPage);
