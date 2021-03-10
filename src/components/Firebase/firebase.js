@@ -81,6 +81,12 @@ class Firebase {
   room = (rid) => this.db.doc(`rooms/${rid}`);
 
   rooms = () => this.db.collection("rooms");
+
+  // *** Functions ***
+
+  appendArray = (doc, array, value) => this.db.doc(doc).update({
+    [array]: this.fieldValue.arrayUnion(value),
+  })
 }
 
 export default Firebase;
