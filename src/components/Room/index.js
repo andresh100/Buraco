@@ -17,6 +17,7 @@ class RoomPage extends Component {
     this.state = {
       loadingUsers: true,
       loadingRooms: true,
+      belongsToRoom: false,
       users: [],
       rooms: [],
     };
@@ -50,24 +51,21 @@ class RoomBase extends Component {
   }
 
   componentDidMount() {
+    const { authUser } = this.props;
     this.handle = window.addEventListener("beforeunload", (e) => {
-      const { room } = this.state;
-      const { authUser } = this.props;
-
-      if (room !== {} && room.onlineUsers !== []) {
-        let newRoom = { ...room };
-        let array = [...newRoom.onlineUsers];
-        let index = array.indexOf(authUser.uid);
-        if (index !== -1) {
-          array.splice(index, 1);
-          newRoom.onlineUsers = array;
-          this.props.firebase.room(this.props.match.params.id).set(
-            {
-              ...newRoom,
-            },
-            { merge: true }
-          );
-        }
+      if (
+        this.props.match.params.id !== "" &&
+        this.props.match.params.id !== undefined
+      ) {
+        this.props.firebase
+          .spliceArray(
+            `rooms/${this.props.match.params.id}`,
+            "onlineUsers",
+            authUser.uid
+          )
+          .catch(() => {
+            console.log("Something went Wrong");
+          });
       }
     });
 
@@ -84,56 +82,53 @@ class RoomBase extends Component {
 
   componentDidUpdate(previousProps, previousState) {
     if (previousState.room !== this.state.room) {
-      this.addToRoom();
+      this.loadRoom();
     }
   }
 
   componentWillUnmount() {
     this.unsubscribeRoom();
-    const { room } = this.state;
     const { authUser } = this.props;
 
-    if (room !== {} && room.onlineUsers !== []) {
-      let newRoom = { ...room };
-      let array = [...newRoom.onlineUsers];
-      let index = array.indexOf(authUser.uid);
-      if (index !== -1) {
-        array.splice(index, 1);
-        newRoom.onlineUsers = array;
-        this.props.firebase.room(this.props.match.params.id).set(
-          {
-            ...newRoom,
-          },
-          { merge: true }
-        );
-      }
+    if (
+      this.props.match.params.id !== "" &&
+      this.props.match.params.id !== undefined
+    ) {
+      this.props.firebase
+        .spliceArray(
+          `rooms/${this.props.match.params.id}`,
+          "onlineUsers",
+          authUser.uid
+        )
+        .catch(() => {
+          console.log("Something went Wrong");
+        });
     }
     this.handle && this.handle();
   }
 
   addToRoom() {
-    const { room } = this.state;
+    const { room, belongsToRoom } = this.state;
     const { authUser } = this.props;
     if (
       room !== {} &&
       room.onlineUsers !== [] &&
       !room.onlineUsers.includes(authUser.uid)
     ) {
-      let newRoom = { ...room };
-      newRoom.onlineUsers.push(authUser.uid);
       this.props.firebase
-        .room(this.props.match.params.id)
-        .set(
-          {
-            ...newRoom,
-          },
-          { merge: true }
+        .appendArray(
+          `rooms/${this.props.match.params.id}`,
+          "onlineUsers",
+          authUser.uid
         )
         .then(() => {
           this.setState({
             room,
             loadingRoom: false,
           });
+        })
+        .catch(() => {
+          console.log("Something went Wrong");
         });
     } else {
       this.setState({
@@ -143,8 +138,25 @@ class RoomBase extends Component {
     }
   }
 
+  loadRoom() {
+    const { room } = this.state;
+    const { authUser } = this.props;
+
+    if (room.players.includes(authUser.uid)) {
+      this.setState({
+        belongsToRoom: true,
+      });
+      this.addToRoom();
+    } else {
+      this.setState({
+        belongsToRoom: false,
+        loadingRoom: false,
+      });
+    }
+  }
+
   render() {
-    const { room, loadingRoom } = this.state;
+    const { room, loadingRoom, belongsToRoom } = this.state;
 
     return (
       <div>
@@ -154,8 +166,14 @@ class RoomBase extends Component {
           </div>
         ) : (
           <>
-            ROOM NAME: {room.name}
-            <Game />
+            {belongsToRoom ? (
+              <>
+                ROOM NAME: {room.name}
+                <Game />
+              </>
+            ) : (
+              <> You are not a member of this Room</>
+            )}
           </>
         )}
       </div>

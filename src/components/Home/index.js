@@ -88,10 +88,32 @@ class HomeBase extends Component {
         .appendArray(`rooms/${rid}`, "players", authUser.uid)
         .then(() => {
           history.push(ROUTES.ROOM + "/" + rid);
-        }).catch(()=>{
-          console.log("Something went Wrong")
+        })
+        .catch(() => {
+          console.log("Something went Wrong");
         });
     }
+  }
+
+  createRoom() {
+    this.props.firebase.db
+      .collection("rooms")
+      .add({
+        name: "",
+        onlineUsers: [],
+        players: [],
+      })
+      .then((docRef) => {
+        this.props.firebase.rooms.set(
+          {
+            rid: docRef.id,
+          },
+          { merge: true }
+        );
+      })
+      .catch((error) => {
+        console.error("Error adding document: ", error);
+      });
   }
 
   render() {
@@ -104,49 +126,54 @@ class HomeBase extends Component {
             <div className="loader is-loading"></div>
           </div>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>
-                  <abbr title="Room Name">Room</abbr>
-                </th>
-                <th>
-                  <abbr title="Number of players in this Room"># of Players</abbr>
-                </th>
-                <th>
-                  <abbr title="Join">Join</abbr>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rooms.map((room, index) => (
+          <>
+            <button onClick={() => this.createRoom()}>Create Room</button>
+            <table className="table">
+              <thead>
                 <tr>
-                  <td>{room && room.name && room.name}</td>
-                  <td>
-                    {room &&
-                      room.players &&
-                      room.players.length &&
-                      room.players.length}
-                    /4
-                  </td>
-                  <td>
-                    <button
-                      className="button is-primary"
-                      disabled={
-                        room &&
+                  <th>
+                    <abbr title="Room Name">Room</abbr>
+                  </th>
+                  <th>
+                    <abbr title="Number of players in this Room">
+                      # of Players
+                    </abbr>
+                  </th>
+                  <th>
+                    <abbr title="Join">Join</abbr>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rooms.map((room, index) => (
+                  <tr>
+                    <td>{room && room.name && room.name}</td>
+                    <td>
+                      {room &&
                         room.players &&
                         room.players.length &&
-                        room.players.length === 4
-                      }
-                      onClick={(e) => this.joinGame(e, room.rid)}
-                    >
-                      Join
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        room.players.length}
+                      /4
+                    </td>
+                    <td>
+                      <button
+                        className="button is-primary"
+                        disabled={
+                          room &&
+                          room.players &&
+                          room.players.length &&
+                          room.players.length === 4
+                        }
+                        onClick={(e) => this.joinGame(e, room.rid)}
+                      >
+                        Join
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     );

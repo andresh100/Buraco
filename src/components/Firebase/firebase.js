@@ -87,6 +87,10 @@ class Firebase {
   appendArray = (doc, array, value) => this.db.doc(doc).update({
     [array]: this.fieldValue.arrayUnion(value),
   })
+
+  spliceArray = (doc, array, value) => this.db.doc(doc).update({
+    [array]: this.fieldValue.arrayRemove(value),
+  })
 }
 
 export default Firebase;
