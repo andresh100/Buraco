@@ -120,7 +120,7 @@ class HomeBase extends Component {
     const { users, rooms, loadingRooms, loadingUsers } = this.state;
 
     return (
-      <div class="container">
+      <div className="container">
         {loadingRooms || loadingUsers ? (
           <div className="loader-wrapper is-active">
             <div className="loader is-loading"></div>
