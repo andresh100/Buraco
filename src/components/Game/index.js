@@ -14,20 +14,60 @@ class GamePage extends Component {
     this.state = {
       loadingUsers: true,
       loadingRooms: true,
-      users: [],
+      users: [
+        {
+          id: "Andre",
+          hand: [],
+        },
+        {
+          id: "Cris",
+          hand: [],
+        },
+        {
+          id: "Gaby",
+          hand: [],
+        },
+        {
+          id: "Rafa",
+          hand: [],
+        },
+      ],
       rooms: [],
       suits: ["spades", "diamonds", "clubs", "hearts"],
       ranks: ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
       deck: [],
+      cardsPerHand: 11,
+      numberOfCardSets: 2,
     };
   }
 
   componentDidMount() {
-    let deck = this.getDeck();
+    let cards = [];
+    for (let i = 0; i < this.state.numberOfCardSets; i++) {
+      let deck = this.getDeck();
+      cards = [...cards, ...deck];
+    }
+    this.handCards(cards);
+  }
+
+  handCards(deck) {
+    const { users, cardsPerHand } = this.state;
+    users.forEach((user) => {
+      const hand = [];
+      for (let i = 0; i < cardsPerHand; i++) {
+        let randomIndex = Math.floor(Math.random() * deck.length);
+        let card = deck[randomIndex];
+        hand.push(card);
+        deck.splice(randomIndex, 1);
+      }
+      user.hand = hand;
+    });
     this.setState({
       deck,
+      users,
     });
     this.renderDeck(deck);
+    this.renderHands(users);
   }
 
   getDeck() {
@@ -57,7 +97,6 @@ class GamePage extends Component {
   }
 
   shuffleSave(deck) {
-    console.log("test");
     this.shuffle(deck);
     this.setState({
       deck,
@@ -73,9 +112,9 @@ class GamePage extends Component {
       let rank = document.createElement("div");
       let suit = document.createElement("div");
       var icon = "";
-      if (deck[i].Suit == "hearts") icon = "♥";
-      else if (deck[i].Suit == "spades") icon = "♠";
-      else if (deck[i].Suit == "diamonds") icon = "♦";
+      if (deck[i].Suit === "hearts") icon = "♥";
+      else if (deck[i].Suit === "spades") icon = "♠";
+      else if (deck[i].Suit === "diamonds") icon = "♦";
       else icon = "♣";
 
       card.className = "card";
@@ -90,12 +129,36 @@ class GamePage extends Component {
     }
   }
 
-  // card = (number, symbol) => (
-  //   <div>
-  //     ({number}
-  //     {symbol})
-  //   </div>
-  // );
+  renderHands(users) {
+    document.getElementById("hands").innerHTML = "";
+    users.forEach((user) => {
+      const cards = user.hand;
+      let hand = document.createElement("div");
+      hand.innerHTML = `${user.id}: `;
+      for (var i = 0; i < cards.length; i++) {
+        let card = document.createElement("div");
+        let rank = document.createElement("div");
+        let suit = document.createElement("div");
+        var icon = "";
+        if (cards[i].Suit === "hearts") icon = "♥";
+        else if (cards[i].Suit === "spades") icon = "♠";
+        else if (cards[i].Suit === "diamonds") icon = "♦";
+        else icon = "♣";
+
+        hand.className = "hand";
+        card.className = "card";
+        rank.className = "value";
+        suit.className = "suit " + cards[i].Suit;
+
+        suit.innerHTML = icon;
+        rank.innerHTML = cards[i].Rank;
+        hand.appendChild(card);
+        card.appendChild(rank);
+        card.appendChild(suit);
+      }
+      document.getElementById("hands").appendChild(hand);
+    });
+  }
 
   render() {
     const {
@@ -106,19 +169,18 @@ class GamePage extends Component {
       ranks,
       suits,
       deck,
+      numberOfCardSets,
     } = this.state;
 
     return (
       <div>
-        {/* <div>{this.card(ranks[1], suits.hearts)}</div> */}
-        <div>{console.log("deck", deck)}</div>
         <div class="deck">
-          <h1>A Deck of Cards</h1>
-
+          <h1>{numberOfCardSets} Deck of Cards</h1>
           <button class="btn" onClick={() => this.shuffleSave(deck)}>
             Shuffle
           </button>
           <div id="deck"></div>
+          <div id="hands"></div>
         </div>
       </div>
     );

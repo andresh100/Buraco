@@ -37,6 +37,14 @@
   border: solid 3px;
 }
 
+.deck .hand {
+  display: inline-block;
+}
+
+#hands {
+  margin-top: 50px;
+}
+
 .card2 {
   width: 50px;
   padding: 10px;
@@ -50,12 +58,14 @@
   border: solid 3px;
 }
 
-.card .diamonds, .card .hearts {
+.card .diamonds,
+.card .hearts {
   color: red;
 }
 
-.card .clubs, .card .spades {
-    color: black;
+.card .clubs,
+.card .spades {
+  color: black;
 }
 
 //https://www.thatsoftwaredude.com/content/6196/coding-a-card-deck-in-javascript
